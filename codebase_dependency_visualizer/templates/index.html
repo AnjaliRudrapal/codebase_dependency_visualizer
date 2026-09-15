@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Codebase Visualizer
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='style.css'
+        ) }}"
+    >
+
+    <script
+        src="https://unpkg.com/cytoscape@3.31.2/dist/cytoscape.min.js"
+    ></script>
+
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="logo">
+            ⌘
+        </div>
+
+        <div>
+
+            <strong>
+                Codebase Visualizer
+            </strong>
+
+            <span>
+                Python project insights
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="top-actions">
+
+        <label class="button secondary">
+
+            Upload ZIP
+
+            <input
+                id="fileInput"
+                type="file"
+                accept=".zip"
+                hidden
+            >
+
+        </label>
+
+        <a
+            id="exportBtn"
+            class="button primary disabled"
+        >
+            Export JSON
+        </a>
+
+    </div>
+
+</header>
+
+
+<section
+    id="landing"
+    class="landing"
+>
+
+    <div class="landing-card">
+
+        <span class="eyebrow">
+            PYTHON DEVELOPER TOOL
+        </span>
+
+        <h1>
+            See the structure
+            of your codebase.
+        </h1>
+
+        <p>
+            Upload a Python project and get
+            dependency graphs, architecture
+            signals, code hotspots and
+            file-level insights.
+        </p>
+
+        <label
+            id="dropzone"
+            class="dropzone"
+        >
+
+            <div class="upload-icon">
+                ↑
+            </div>
+
+            <strong>
+                Drop a ZIP here
+            </strong>
+
+            <span>
+                or click to browse
+            </span>
+
+            <input
+                id="dropInput"
+                type="file"
+                accept=".zip"
+                hidden
+            >
+
+        </label>
+
+        <div
+            id="landingStatus"
+            class="status"
+        ></div>
+
+    </div>
+
+</section>
+
+
+<section
+    id="dashboard"
+    class="dashboard hidden"
+>
+
+    <aside class="sidebar">
+
+        <div class="side-label">
+            PROJECT
+        </div>
+
+        <h2 id="projectName">
+            —
+        </h2>
+
+        <input
+            id="searchInput"
+            class="search"
+            placeholder="Search files..."
+        >
+
+        <div class="side-label">
+            FILES
+        </div>
+
+        <div
+            id="fileList"
+            class="file-list"
+        ></div>
+
+        <div class="side-label">
+            VIEWS
+        </div>
+
+        <div class="side-actions">
+
+            <button id="fitBtn">
+                Fit graph
+            </button>
+
+            <button id="resetBtn">
+                Reset
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <main class="content">
+
+        <div
+            id="error"
+            class="error"
+        ></div>
+
+        <div
+            id="metrics"
+            class="metrics"
+        ></div>
+
+        <div class="main-grid">
+
+            <section class="panel graph-panel">
+
+                <div class="panel-header">
+
+                    <h2>
+                        Dependency graph
+                    </h2>
+
+                    <p>
+                        Click a node to explore
+                        its relationships.
+                    </p>
+
+                </div>
+
+                <div
+                    id="graph"
+                    class="graph"
+                ></div>
+
+            </section>
+
+
+            <aside class="right-column">
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>
+                            Architecture score
+                        </h2>
+
+                        <p>
+                            Based on structural signals.
+                        </p>
+
+                    </div>
+
+                    <div class="score-wrap">
+
+                        <div
+                            id="score"
+                            class="score"
+                        >
+                            —
+                        </div>
+
+                        <div>
+
+                            <strong
+                                id="scoreLabel"
+                            >
+                                —
+                            </strong>
+
+                            <span
+                                id="scoreText"
+                            >
+                                —
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <h2 id="detailTitle">
+                            Select a file
+                        </h2>
+
+                        <p id="detailPath">
+                            No file selected
+                        </p>
+
+                    </div>
+
+                    <div
+                        id="detailStats"
+                        class="detail-stats"
+                    ></div>
+
+                    <div class="detail-section">
+
+                        <h3>
+                            Dependencies
+                        </h3>
+
+                        <div
+                            id="dependencies"
+                            class="chips"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+                    <div class="detail-section">
+
+                        <h3>
+                            Used by
+                        </h3>
+
+                        <div
+                            id="dependents"
+                            class="chips"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+                    <div class="detail-section">
+
+                        <h3>
+                            Imported packages
+                        </h3>
+
+                        <div
+                            id="imports"
+                            class="chips"
+                        >
+                            —
+                        </div>
+
+                    </div>
+
+                    <button
+                        id="sourceBtn"
+                        class="button primary source-button"
+                        disabled
+                    >
+                        View source
+                    </button>
+
+                </section>
+
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <h2>
+                            Hotspots
+                        </h2>
+
+                        <p>
+                            Files worth reviewing first.
+                        </p>
+
+                    </div>
+
+                    <div
+                        id="hotspots"
+                    ></div>
+
+                </section>
+
+            </aside>
+
+        </div>
+
+
+        <div class="bottom-grid">
+
+            <section class="panel">
+
+                <div class="panel-header">
+
+                    <h2>
+                        Architecture insights
+                    </h2>
+
+                    <p>
+                        Structural observations.
+                    </p>
+
+                </div>
+
+                <div
+                    id="insights"
+                ></div>
+
+            </section>
+
+
+            <section class="panel">
+
+                <div class="panel-header">
+
+                    <h2>
+                        Circular dependencies
+                    </h2>
+
+                    <p>
+                        Dependency cycles detected.
+                    </p>
+
+                </div>
+
+                <div
+                    id="cycles"
+                ></div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</section>
+
+
+<dialog id="sourceDialog">
+
+    <div class="dialog-header">
+
+        <div>
+
+            <h2 id="sourceTitle">
+                Source
+            </h2>
+
+            <p id="sourcePath"></p>
+
+        </div>
+
+        <button
+            id="closeDialog"
+            class="close-button"
+        >
+            ×
+        </button>
+
+    </div>
+
+    <pre id="sourceCode"></pre>
+
+</dialog>
+
+
+<script
+    src="{{ url_for(
+        'static',
+        filename='app.js'
+    ) }}"
+></script>
+
+</body>
+</html>
